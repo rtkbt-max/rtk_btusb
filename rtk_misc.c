@@ -335,6 +335,8 @@ static patch_info fw_patch_table[] = {
 	{0xc82c, 0x8822, "mp_rtl8822cu_fw", "rtl8822cu_fw", "rtl8822cu_config", RTL8822CU}, /* RTL8822CU */
 	{0xc82e, 0x8822, "mp_rtl8822cu_fw", "rtl8822cu_fw", "rtl8822cu_config", RTL8822CU}, /* RTL8822CU */
 	{0xc81d, 0x8822, "mp_rtl8822cu_fw", "rtl8822cu_fw", "rtl8822cu_config", RTL8822CU}, /* RTL8822CU */
+	{0xd820, 0x8822, "mp_rtl8822cu_fw", "rtl8822cu_fw", "rtl8822cu_config", RTL8822CU}, /* RTL8821DU */
+
 	{0xc822, 0x8822, "mp_rtl8822cu_fw", "rtl8822cu_fw", "rtl8822cu_config", RTL8822CU}, /* RTL8822CE */
 	{0xc82b, 0x8822, "mp_rtl8822cu_fw", "rtl8822cu_fw", "rtl8822cu_config", RTL8822CU}, /* RTL8822CE */
 	{0xb00c, 0x8822, "mp_rtl8822cu_fw", "rtl8822cu_fw", "rtl8822cu_config", RTL8822CU}, /* RTL8822CE */
@@ -981,6 +983,11 @@ int set_scan(struct usb_interface *intf)
 
 	init_xdata(xdata, dev_entry);
 
+	if ( !xdata->send_pkt || !xdata->rcv_pkt ){
+		result = -1;
+		goto end;
+	}
+
 	xdata->cmd_hdr->opcode = cpu_to_le16(STARTSCAN_OPCODE);
 	xdata->cmd_hdr->plen = 1;
 	xdata->pkt_len = CMD_HDR_LEN + 1;
@@ -992,13 +999,9 @@ int set_scan(struct usb_interface *intf)
 
 	result = rcv_hci_evt(xdata);
 end:
-	if (xdata) {
-		if (xdata->send_pkt)
-			kfree(xdata->send_pkt);
-		if (xdata->rcv_pkt)
-			kfree(xdata->rcv_pkt);
-		kfree(xdata);
-	}
+	kfree(xdata->send_pkt);
+	kfree(xdata->rcv_pkt);
+	kfree(xdata);
 
 	RTKBT_DBG("%s done", __func__);
 
@@ -1127,6 +1130,7 @@ static void merge_configs(struct list_head *head, struct list_head *head2)
 					       extra->len);
 					list_del(epos);
 					kfree(extra);
+					break;
 				} else {
 					/* Replace the item */
 					list_del(epos);
@@ -1593,7 +1597,7 @@ int load_firmware(dev_data * dev_entry, uint8_t ** buff)
 				rtk_get_patch_entry(epatch_buf, &current_entry);
 
 				if (current_entry.patch_length == 0)
-					goto fw_fail;
+					goto alloc_fail;
 
 				buf_len =
 				    current_entry.patch_length + config_len;

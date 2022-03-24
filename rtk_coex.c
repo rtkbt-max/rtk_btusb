@@ -453,10 +453,11 @@ static uint8_t list_allocate_add(uint16_t handle, uint16_t psm,
 
 static void delete_profile_from_hash(rtk_prof_info * desc)
 {
-	RTKBT_DBG("Delete profile: hndl 0x%04x, psm 0x%04x, dcid 0x%04x, "
-		  "scid 0x%04x", desc->handle, desc->psm, desc->dcid,
-		  desc->scid);
 	if (desc) {
+		RTKBT_DBG("Delete profile: hndl 0x%04x, psm 0x%04x, dcid 0x%04x, "
+			"scid 0x%04x", desc->handle, desc->psm, desc->dcid,
+			desc->scid);
+
 		list_del(&desc->list);
 		kfree(desc);
 		desc = NULL;

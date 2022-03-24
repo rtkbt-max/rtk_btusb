@@ -35,7 +35,7 @@
 #include "rtk_bt.h"
 #include "rtk_misc.h"
 
-#define VERSION "3.1"
+#define VERSION "3.1.4ca2e79.20220318-102809"
 
 #ifdef BTCOEX
 #include "rtk_coex.h"
@@ -747,19 +747,16 @@ static void btusb_isoc_tx_complete(struct urb *urb)
 	struct sk_buff *skb = urb->context;
 	struct hci_dev *hdev = (struct hci_dev *)skb->dev;
 
-	//RTKBT_DBG("%s: urb %p status %d count %d",
-	//__func__, urb, urb->status, urb->actual_length);
+	RTKBT_DBG("%s: urb %p status %d count %d",__func__,
+		       	urb, urb->status, urb->actual_length);
 
-	if (skb && hdev) {
-		if (!test_bit(HCI_RUNNING, &hdev->flags))
-			goto done;
+	if (!test_bit(HCI_RUNNING, &hdev->flags))
+		goto done;
 
-		if (!urb->status)
-			hdev->stat.byte_tx += urb->transfer_buffer_length;
-		else
-			hdev->stat.err_tx++;
-	} else
-		RTKBT_ERR("%s: skb 0x%p hdev 0x%p", __func__, skb, hdev);
+	if (!urb->status)
+		hdev->stat.byte_tx += urb->transfer_buffer_length;
+	else
+		hdev->stat.err_tx++;
 
 done:
 	kfree(urb->setup_packet);
@@ -782,7 +779,7 @@ static int btusb_open(struct hci_dev *hdev)
 	/*******************************/
 	if (0 == atomic_read(&hdev->promisc)) {
 		RTKBT_ERR("btusb_open hdev->promisc ==0");
-		err = -1;
+		//err = -1;
 		//goto failed;
 	}
 
